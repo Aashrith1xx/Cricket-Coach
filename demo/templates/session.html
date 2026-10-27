@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Session consistency</title>
+<style>
+ :root{--bg:#0f1216;--panel:#171b21;--line:#262c35;--text:#e8ecf1;--muted:#98a2b0;--ok:#4ade80;--warn:#fbbf24}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--text);display:flex;justify-content:center;
+      font:15px/1.55 -apple-system,"Segoe UI",Roboto,sans-serif;padding:40px 20px 80px}
+ .wrap{width:100%;max-width:780px}
+ a.back{color:var(--muted);text-decoration:none;font-size:14px}
+ h1{font-size:26px;margin:14px 0 6px}
+ .headline{font-size:16px;font-weight:620;margin:0 0 22px;line-height:1.5}
+ .panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:20px}
+ .m{padding:13px 0;border-top:1px solid var(--line)}
+ .m:first-child{border-top:0}
+ .top{display:flex;justify-content:space-between;gap:12px}
+ .name{font-weight:600;font-size:14.5px}
+ .verdict{font-size:12.5px;font-weight:650}
+ .v-very{color:var(--ok)} .v-fairly{color:var(--warn)} .v-varies{color:#f87171} .v-not{color:var(--muted)}
+ .nums{font-size:12px;color:var(--muted);margin-top:4px;font-variant-numeric:tabular-nums}
+ .muted{color:var(--muted);font-size:13.5px}
+</style></head>
+<body><div class="wrap">
+ <a class="back" href="/saved">&larr; Saved analyses</a>
+ <h1>{{ label }} — consistency</h1>
+ <p class="headline">{{ result.headline }}</p>
+
+ {% if result.metrics %}
+   <div class="panel">
+   {% for m in result.metrics %}
+     <div class="m">
+       <div class="top">
+         <span class="name">{{ m.summary }}</span>
+         <span class="verdict v-{{ m.verdict.split(' ')[0] }}">{{ m.verdict }}</span>
+       </div>
+       <div class="nums">
+         {% if m.resolvable %}
+           mean {{ m.mean }} {{ m.units }} · your spread ±{{ m.true_sd }} ·
+           measurement error ±{{ m.measurement_sem }}
+         {% else %}
+           spread ±{{ m.observed_sd }} is no bigger than the ±{{ m.measurement_sem }}
+           measurement error — the camera moved as much as you did
+         {% endif %}
+       </div>
+     </div>
+   {% endfor %}
+   </div>
+   <p class="muted" style="margin-top:16px">
+     Repeatability is a form quality in its own right, and the only one measurable from your
+     own clips alone — no reference population needed. Measurement error is subtracted from
+     every spread, so this reports how much <em>you</em> varied rather than how much the
+     camera did.
+   </p>
+ {% else %}
+   <div class="panel muted">
+     Record at least {{ min_clips }} clips of this shot. Each one is saved automatically, and
+     this page compares them.
+   </div>
+ {% endif %}
+</div></body></html>

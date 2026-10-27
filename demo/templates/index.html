@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cricket Form Analysis</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171b21; --line: #262c35;
+    --text: #e8ecf1; --muted: #98a2b0; --accent: #4ade80; --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center; padding: 48px 20px;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.02em; }
+  .lede { color: var(--muted); margin: 0 0 32px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+  label { display: block; font-weight: 600; margin: 20px 0 8px; font-size: 14px; }
+  label:first-of-type { margin-top: 0; }
+  select, input[type=file] {
+    width: 100%; padding: 11px 13px; background: #0f1216; color: var(--text);
+    border: 1px solid var(--line); border-radius: 9px; font-size: 14px;
+  }
+  input[type=file] { padding: 10px; }
+  button {
+    width: 100%; margin-top: 26px; padding: 14px; font-size: 15px; font-weight: 650;
+    background: var(--accent); color: #06210f; border: 0; border-radius: 9px; cursor: pointer;
+  }
+  button:disabled { opacity: .55; cursor: progress; }
+  .note {
+    margin-top: 22px; padding: 15px 16px; border-left: 3px solid var(--warn);
+    background: #1c1a12; border-radius: 0 9px 9px 0; font-size: 13.5px; color: #e4d5a8;
+  }
+  .note strong { color: #fde68a; }
+  .sample {
+    margin-top: 22px; padding: 15px 16px; background: #12191a;
+    border: 1px solid #1e3a3a; border-radius: 10px; font-size: 13.5px; color: var(--muted);
+  }
+  .sample strong { display: block; color: var(--text); margin-bottom: 4px; }
+  .sample a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .sample a:hover { text-decoration: underline; }
+  .opt { font-weight: 500; color: var(--muted); font-size: 12px; }
+  .hint { margin: 8px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+  .req { margin-top: 26px; font-size: 13.5px; color: var(--muted); }
+  .req h3 { color: var(--text); font-size: 14px; margin: 0 0 10px; }
+  .req li { margin-bottom: 6px; }
+  #status { display: none; margin-top: 18px; color: var(--muted); font-size: 14px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cricket form analysis</h1>
+  <p style="margin:-4px 0 8px"><a href="/saved" style="color:#4ade80;text-decoration:none;font-size:14px;font-weight:600">View saved analyses &rarr;</a></p>
+  <p class="lede">Upload a clip of a shot or a delivery and see what can actually be measured from it.</p>
+
+  <form class="panel" method="post" action="/analyse" enctype="multipart/form-data"
+        onsubmit="document.getElementById('go').disabled=true; document.getElementById('status').style.display='block';">
+    <label for="clip">Your clip</label>
+    <input id="clip" type="file" name="clip" accept="video/*" required>
+
+    <label for="front_clip">Front-on clip <span class="opt">optional</span></label>
+    <input id="front_clip" type="file" name="front_clip" accept="video/*">
+    <p class="hint">
+      The same shot filmed from in front. Adds hip–shoulder separation and stance width,
+      and gives the 3D view its left–right axis. Without it the 3D skeleton stays flat,
+      because one camera genuinely cannot see that axis.
+    </p>
+
+    <label for="form_type">What are you doing?</label>
+    <select id="form_type" name="form_type">
+      <option value="auto" selected>Work it out from the clip</option>
+      {% for key, (label, discipline) in form_types.items() %}
+      <option value="{{ key }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="style">How do you play?</label>
+    <select id="style" name="style">
+      <option value="balanced">Balanced</option>
+      <option value="attacking">Attacking</option>
+      <option value="defensive">Defensive</option>
+    </select>
+
+    <label for="view">Where was the camera?</label>
+    <select id="view" name="view">
+      <option value="auto">Work it out for me</option>
+      <option value="side_on">To my side — I can see the player's side profile</option>
+      <option value="front_on">In front / down the pitch — I can see their chest or back</option>
+    </select>
+
+    <label for="handedness">Handedness</label>
+    <select id="handedness" name="handedness">
+      <option value="auto">Work it out for me</option>
+      <option value="right">Right handed</option>
+      <option value="left">Left handed</option>
+    </select>
+
+    <button id="go" type="submit">Analyse</button>
+    <div id="status">
+      Processing — usually 30–90 seconds. Don't close this tab.<br>
+      If this is the first upload in a while, the server may be waking up, which adds a minute.
+    </div>
+  </form>
+
+  <div class="sample">
+    <strong>No footage to hand?</strong>
+    Run a built-in synthetic clip through the same pipeline to see the output format:
+    <a href="/sample?discipline=batting">batting sample</a> ·
+    <a href="/sample?discipline=bowling">bowling sample</a>
+  </div>
+
+  <div class="note">
+    <strong>The rating grades the checks, not you against other players.</strong> You'll
+    get a score out of 100 on the mechanical checks this clip could support — sequence and
+    direction, both settled without needing a reference population — plus measurements with
+    error bars. What you won't get is "your knee is more flexed than typical": that needs
+    reference ranges nobody has gathered, and inventing them would produce feedback that
+    looks right and isn't.
+  </div>
+
+  <div class="req">
+    <h3>For anything useful, the clip needs to be</h3>
+    <ul>
+      <li><strong>Side on</strong> — square to the player, not at an angle. Joints have to be in the camera's plane to be measurable at all.</li>
+      <li><strong>Still</strong> — phone on a tripod, a bag, a fence. Handheld gets rejected, because camera movement looks exactly like player movement.</li>
+      <li><strong>Slow motion</strong> — 120fps or 240fps. At 30fps the moment of contact or release happens between frames.</li>
+      <li><strong>Close enough</strong> — the player filling most of the frame height.</li>
+      <li><strong>One person</strong> — in frame, for the whole clip.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>

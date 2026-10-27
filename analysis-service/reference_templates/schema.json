@@ -1,0 +1,149 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cricket-form-app/reference_templates/schema.json",
+  "title": "Reference template",
+  "description": "Expected ranges for one form type. Every metric must be traceable to a source in docs/SOURCES.md and must declare its angle convention. template_validator.py enforces this at boot - a template that fails validation stops the service rather than silently scoring against unsourced numbers.",
+  "type": "object",
+  "required": ["form_type", "discipline", "version", "phase_events", "metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "form_type": {
+      "type": "string",
+      "description": "Matches the filename stem and the formType sent by the client.",
+      "pattern": "^[a-z_]+$"
+    },
+    "discipline": {
+      "type": "string",
+      "enum": ["batting", "bowling"]
+    },
+    "version": {
+      "type": "string",
+      "description": "Semver. Stored on every analysisResult so historical scores remain interpretable after a template changes.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "phase_events": {
+      "type": "array",
+      "description": "Event names this form type emits. Must match phase_detection output exactly.",
+      "items": { "type": "string" },
+      "minItems": 2
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Keyed by metric key from metric_tiers.REGISTRY.",
+      "additionalProperties": { "$ref": "#/definitions/metric" }
+    },
+    "style_variants": {
+      "type": "object",
+      "description": "Optional per-style overrides. Resolution order: declared-style variant with its own source, else the style-agnostic metrics block, else unscored. Never synthesise a style-specific range.",
+      "propertyNames": { "enum": ["attacking", "balanced", "defensive"] },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "$ref": "#/definitions/metric" }
+      }
+    },
+    "notes": { "type": "string" }
+  },
+  "definitions": {
+    "metric": {
+      "type": "object",
+      "required": [
+        "tier",
+        "event",
+        "units",
+        "convention",
+        "expected_low",
+        "expected_high",
+        "band_derivation",
+        "source",
+        "population",
+        "confidence",
+        "discriminates_skill"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "tier": {
+          "type": "string",
+          "enum": ["A", "B", "C", "DESCRIPTOR"],
+          "description": "Must equal the tier in metric_tiers.REGISTRY. Duplicated here so a template drifting from the registry is caught rather than silently overriding it."
+        },
+        "event": {
+          "type": "string",
+          "description": "Measurement event, or 'A->B' for a span. Must appear in phase_events."
+        },
+        "units": {
+          "type": "string",
+          "enum": ["deg", "s", "frac_stature", "pct_stature", "ratio", "count", "category"]
+        },
+        "convention": {
+          "description": "Angle convention. MANDATORY and nullable: null for non-angle metrics, otherwise straight_180 or flexion_from_0. These two are inverses; mixing them silently flips a grade. Null must be an explicit choice, not an omission.",
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "enum": ["straight_180", "flexion_from_0"] }
+          ]
+        },
+        "expected_low": { "type": ["number", "null"] },
+        "expected_high": { "type": ["number", "null"] },
+        "band_derivation": {
+          "type": "string",
+          "enum": ["mean_pm_1sd", "reported_range", "reported_threshold", "derived_conversion", "observed_cohort", "todo"],
+          "description": "How the band was obtained. 'derived_conversion' requires a derivation note. 'observed_cohort' means measured from footage by cohort/build.py rather than taken from literature, and requires a 'cohort' block. 'todo' requires expected_low and expected_high to be null, and makes the metric unscored."
+        },
+        "cohort": {
+          "type": "object",
+          "description": "Required when band_derivation is 'observed_cohort'. Records how the band was measured so a future reader can judge it without re-running anything.",
+          "required": ["n_clips", "mean", "observed_sd", "measurement_sem", "true_sd_estimate", "derived_on"],
+          "properties": {
+            "n_clips": { "type": "integer", "minimum": 1 },
+            "mean": { "type": "number" },
+            "observed_sd": {
+              "type": "number",
+              "description": "Raw spread across the cohort: real variation between players AND measurement error together."
+            },
+            "measurement_sem": {
+              "type": "number",
+              "description": "Mean measurement error of the contributing clips. If this approaches observed_sd, the band is mostly noise."
+            },
+            "true_sd_estimate": {
+              "type": "number",
+              "description": "sqrt(observed_sd^2 - measurement_sem^2): the spread attributable to players actually differing. This is what the band width uses."
+            },
+            "signal_to_noise": { "type": "number" },
+            "derived_on": { "type": "string" }
+          }
+        },
+        "source": {
+          "type": "string",
+          "description": "Citation key from docs/SOURCES.md. Empty string only permitted when band_derivation is 'todo'."
+        },
+        "population": {
+          "type": "string",
+          "enum": [
+            "elite_male",
+            "elite_female",
+            "elite_mixed",
+            "club",
+            "junior_u19",
+            "junior_u16",
+            "mixed_standard",
+            "unknown"
+          ],
+          "description": "Who the range came from. Elite male ranges must not be applied to a junior without the UI saying so."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Quality of the underlying evidence: sample size, reliability, task similarity. Scales nothing automatically - it is surfaced to the user alongside the range."
+        },
+        "discriminates_skill": {
+          "type": "boolean",
+          "description": "Must match metric_tiers.REGISTRY. False for variables shown not to separate skill levels (bat angle, bat speed, shoulder angle); these carry zero score weight."
+        },
+        "derivation": {
+          "type": "string",
+          "description": "Required when band_derivation is 'derived_conversion'. State every assumption, e.g. a population mean stature used to normalise a value reported in metres."
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

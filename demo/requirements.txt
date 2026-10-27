@@ -1,0 +1,13 @@
+# Deployment dependencies for the demo web app.
+#
+# Deliberately minimal: no PyTorch, no mmpose, no mmdet. The ONNX exports run under
+# onnxruntime alone, which is what keeps the image small enough to build on a free tier and
+# the cold start short enough to survive Render's 15-minute idle spin-down.
+
+flask==3.1.3
+gunicorn==23.0.0
+
+numpy==2.4.6
+scipy==1.17.1
+opencv-python-headless==5.0.0.93   # headless: no GUI libraries on a server image
+onnxruntime==1.28.0

@@ -1,0 +1,105 @@
+{
+  "form_type": "spin_bowling",
+  "discipline": "bowling",
+  "version": "0.1.0",
+  "notes": "Spin bowling is the weakest-served form type in this scaffold, and it is worth being explicit about why rather than quietly shipping a thin file. The cricket biomechanics literature is dominated by FAST bowling, largely because the research funding motivation has been lumbar injury in pace bowlers. What spin-specific quantitative work exists concentrates on ball revolution rate, measured with smart balls and magnetometers at sampling rates around 815 Hz - a ball-instrumentation problem, not a body-kinematics one, and entirely outside what a phone camera can observe. The kinematic variables that transfer from the fast-bowling literature (front knee behaviour, trunk flexion, delivery stride) are plausible but unvalidated for a spin action, whose delivery stride and run-up differ substantially. Nothing here should be scored until spin-specific sources exist. Note also that spin bowlers are the group most often scrutinised for action legality - which this app must never comment on, at any confidence. See docs/ACCURACY.md.",
+  "phase_events": [
+    "RUNUP",
+    "PRE_DELIVERY_STRIDE",
+    "BFC",
+    "FFC",
+    "BR",
+    "FOLLOW_THROUGH"
+  ],
+  "metrics": {
+    "bowling.front_knee_angle_ffc": {
+      "tier": "A",
+      "event": "FFC",
+      "units": "deg",
+      "convention": "straight_180",
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Do not copy the fast-bowling band here once one exists. Spin delivery strides differ in length and speed, and the front-knee mechanism serves a different purpose."
+    },
+    "bowling.front_knee_change_ffc_br": {
+      "tier": "A",
+      "event": "FFC->BR",
+      "units": "deg",
+      "convention": "straight_180",
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Measurable, but unvalidated for spin."
+    },
+    "bowling.interval_bfc_ffc": {
+      "tier": "A",
+      "event": "BFC->FFC",
+      "units": "s",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Temporal metrics are the most robust measurement available and would be the natural place to start for spin."
+    },
+    "bowling.interval_ffc_br": {
+      "tier": "A",
+      "event": "FFC->BR",
+      "units": "s",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Requires the 120 fps floor."
+    },
+    "bowling.runup_final_stride_tempo": {
+      "tier": "A",
+      "event": "RUNUP",
+      "units": "ratio",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Rhythm matters more in spin coaching than raw run-up speed, which makes a ratio-based tempo metric a good candidate - but there is no source."
+    },
+    "bowling.delivery_stride_length_norm": {
+      "tier": "B",
+      "event": "FFC",
+      "units": "frac_stature",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Expected to differ markedly from fast bowling."
+    }
+  },
+  "style_variants": {
+    "attacking": {},
+    "balanced": {},
+    "defensive": {}
+  }
+}

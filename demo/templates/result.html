@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analysis result</title>
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171b21; --line: #262c35;
+    --text: #e8ecf1; --muted: #98a2b0;
+    --ok: #4ade80; --warn: #fbbf24; --bad: #f87171; --dim: #6b7684;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center; padding: 40px 20px 80px;
+  }
+  .wrap { width: 100%; max-width: 860px; }
+  a.back { color: var(--muted); text-decoration: none; font-size: 14px; }
+  a.back:hover { color: var(--text); }
+  h1 { font-size: 27px; margin: 14px 0 22px; letter-spacing: -0.02em; }
+  h2 { font-size: 17px; margin: 34px 0 12px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 13px; padding: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 14px; }
+  .stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .stat .v { font-size: 20px; font-weight: 650; margin-top: 3px; }
+  video { width: 100%; border-radius: 11px; border: 1px solid var(--line); background: #000; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-weight: 600; font-size: 12px;
+       text-transform: uppercase; letter-spacing: .05em; padding: 0 10px 9px; }
+  td { padding: 11px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ci { color: var(--muted); font-size: 12.5px; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 650; }
+  .t-A { background: #133a24; color: var(--ok); }
+  .t-B { background: #3a3113; color: var(--warn); }
+  .banner { border-left: 3px solid var(--warn); background: #1c1a12; color: #e4d5a8;
+            padding: 15px 17px; border-radius: 0 10px 10px 0; margin-bottom: 22px; font-size: 14px; }
+  .banner.bad { border-color: var(--bad); background: #1e1414; color: #fbbcbc; }
+  .banner strong { display: block; margin-bottom: 5px; color: #fde68a; font-size: 15px; }
+  .banner.bad strong { color: #fca5a5; }
+  .ev { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--line); }
+  .ev:first-child { border-top: 0; }
+  .ev .name { font-weight: 620; }
+  .ev .miss { color: var(--dim); }
+  .muted { color: var(--muted); font-size: 13.5px; }
+  .count {
+    font-size: 13px; font-weight: 600; color: var(--muted); background: #0f1216;
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; margin-left: 9px;
+    vertical-align: middle;
+  }
+  tr.unmeasured td { opacity: 0.5; }
+  .finding { padding: 12px 0 12px 14px; border-top: 1px solid var(--line); border-left: 3px solid transparent; }
+  .finding:first-child { border-top: 0; }
+  .f-fault { border-left-color: var(--warn); }
+  .f-good  { border-left-color: var(--ok); }
+  .ftext { font-size: 14.5px; }
+  .headline { font-size: 16px; font-weight: 620; margin: 0 0 6px; line-height: 1.5; }
+  .sub { font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+         color: var(--muted); margin: 22px 0 8px; }
+  .ring-panel { display:flex; gap:26px; align-items:flex-start; flex-wrap:wrap; }
+  .ring-wrap { flex:0 0 190px; }
+  .ring { width:190px; height:190px; transform:rotate(-90deg); }
+  .ring-track { fill:none; stroke:#222a33; stroke-width:13; }
+  .ring-fill { fill:none; stroke:var(--ok); stroke-width:13; stroke-linecap:round;
+               transition:stroke-dasharray .6s ease; }
+  .ring-num { font-size:44px; font-weight:750; fill:var(--text); text-anchor:middle;
+              transform:rotate(90deg); transform-origin:100px 100px; }
+  .ring-cap { font-size:12px; fill:var(--muted); text-anchor:middle;
+              transform:rotate(90deg); transform-origin:100px 100px; }
+  .ring-side { flex:1; min-width:240px; }
+  .aspect { margin-top:14px; }
+  .aspect.off { opacity:.45; }
+  .arow { display:flex; justify-content:space-between; font-size:13.5px; }
+  .alabel { font-weight:600; }
+  .ascore { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .abar { height:6px; background:#222a33; border-radius:3px; margin:5px 0 4px; overflow:hidden; }
+  .abar span { display:block; height:100%; background:var(--ok); border-radius:3px; }
+  .ablurb { font-size:12px; color:var(--muted); line-height:1.45; }
+  .remedy { font-size: 14px; line-height: 1.6; padding: 11px 14px; margin-bottom: 8px;
+            background: #12191a; border: 1px solid #1e3a3a; border-radius: 9px; }
+  .fev { font-size: 12px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; }
+  pre { overflow-x: auto; font-size: 12px; color: var(--muted); background: #0d1014;
+        padding: 14px; border-radius: 9px; border: 1px solid var(--line); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; Analyse another clip</a>
+  <a class="back" href="/saved" style="margin-left:18px">Saved analyses</a>
+  {% if saved_at %}<span class="ci" style="margin-left:18px">saved {{ saved_at.replace('T',' ') }}</span>{% endif %}
+
+  {% if r.fatal %}
+    <h1>That didn't work</h1>
+    <div class="banner bad"><strong>{{ r.fatal }}</strong>
+      This is a bug rather than a problem with your clip.</div>
+    <pre>{{ r.trace }}</pre>
+
+  {% else %}
+    <h1>{{ r.form_label }}</h1>
+
+    {% if r.is_sample %}
+      <div class="banner">
+        <strong>Synthetic sample, not real footage</strong>
+        The motion here is generated, so the skeleton is exact and perfectly tracked — which
+        is what real footage never is. Every stage after pose estimation is the same code
+        your own clip runs through.
+      </div>
+    {% endif %}
+
+    <div class="panel">
+      <div class="grid">
+        <div class="stat"><div class="k">Frame rate</div><div class="v">{{ r.fps }} fps</div></div>
+        <div class="stat"><div class="k">Frames</div><div class="v">{{ r.frames }}</div></div>
+        <div class="stat"><div class="k">Duration</div><div class="v">{{ r.duration }}s</div></div>
+        {% if r.mean_confidence %}
+        <div class="stat"><div class="k">Tracking</div><div class="v">{{ (r.mean_confidence*100)|round|int }}%</div></div>
+        {% endif %}
+        {% if r.detected_view %}
+        <div class="stat">
+          <div class="k">Camera</div>
+          <div class="v">{{ 'side-on' if r.detected_view == 'side_on' else 'front-on' }}</div>
+        </div>
+        {% endif %}
+        {% if r.has_mesh %}
+        <div class="stat"><div class="k">Through net</div><div class="v">yes</div></div>
+        {% endif %}
+        {% if r.handedness %}
+        <div class="stat"><div class="k">Handedness</div><div class="v">{{ r.handedness }}</div></div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% for w in r.warnings or [] %}
+      <div class="banner" style="margin-top:20px">{{ w }}</div>
+    {% endfor %}
+
+    {% if r.rejected %}
+      <h2>We'd rather not guess</h2>
+      {% for rej in r.rejected %}
+        <div class="banner bad">
+          <strong>{{ rej.remedy }}</strong>
+          <span class="muted">Detected: {{ rej.detail }}</span>
+        </div>
+      {% endfor %}
+      <p class="muted">
+        Analysing this anyway would give you numbers that look identical to good ones and
+        aren't. That's the failure mode worth avoiding.
+      </p>
+    {% endif %}
+
+    {% if r.render %}
+      <h2>What the analysis saw</h2>
+      <video controls loop src="/media/{{ r.render }}"></video>
+      <p class="muted">
+        Green skeleton, red joints. Anything drawn faint or hollow was tracked with low
+        confidence. Labels flash on detected phase events.
+      </p>
+    {% endif %}
+
+    {% if r.detected_shot %}
+      <div class="banner" style="border-left-color:#4ade80;background:#12191a;color:#cfe8d8">
+        <strong style="color:#4ade80">
+          Detected: {{ r.detected_shot.label }}
+          {% if r.detected_shot.form_type %}({{ (r.detected_shot.confidence * 100)|round|int }}% sure){% endif %}
+        </strong>
+        {% for why in r.detected_shot.reasoning %}{{ why }} {% endfor %}
+        <div style="margin-top:8px;font-size:12.5px;opacity:.85">
+          Worked out from where your feet went and which way the bat travelled — not from
+          recognising the shot visually. If it's wrong, pick the shot yourself on the upload
+          page; you know better than the geometry does.
+        </div>
+      </div>
+    {% endif %}
+
+    {% if r.rating %}
+      <h2>Shot rating</h2>
+      <div class="panel ring-panel">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 200 200" class="ring">
+            <circle cx="100" cy="100" r="86" class="ring-track"/>
+            {% if r.rating.overall is not none %}
+              <circle cx="100" cy="100" r="86" class="ring-fill"
+                      style="stroke-dasharray: {{ (r.rating.overall / 100 * 540.4)|round(1) }} 540.4"/>
+            {% endif %}
+            <text x="100" y="96" class="ring-num">
+              {{ r.rating.overall if r.rating.overall is not none else '—' }}
+            </text>
+            <text x="100" y="120" class="ring-cap">out of 100</text>
+          </svg>
+        </div>
+        <div class="ring-side">
+          <p class="headline">{{ r.rating.headline }}</p>
+          {% for a in r.rating.aspects %}
+            <div class="aspect {{ '' if a.assessed else 'off' }}">
+              <div class="arow">
+                <span class="alabel">{{ a.label }}</span>
+                <span class="ascore">{{ a.score ~ '' if a.assessed else 'not assessed' }}</span>
+              </div>
+              <div class="abar"><span style="width: {{ a.score if a.assessed else 0 }}%"></span></div>
+              <div class="ablurb">{{ a.blurb }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <p class="muted">
+        This grades <strong>the checks, not your technique against other players</strong>. It
+        says how many verifiable things held up — sequence facts settled by mechanics, and
+        directions with a cited source. Aspects that couldn't be checked score nothing rather
+        than counting as passes, which is why the coverage is quoted alongside the number.
+      </p>
+    {% endif %}
+
+    {% if r.summary %}
+      <h2>Conclusion</h2>
+      <div class="panel">
+        <p class="headline">{{ r.summary.headline }}</p>
+
+        {% if r.summary.faults %}
+          <h3 class="sub">Weak points</h3>
+          {% for f in r.summary.faults %}
+            <div class="finding f-fault">
+              <div class="ftext">{{ f.text }}</div>
+              <div class="fev">{{ f.evidence }}</div>
+            </div>
+          {% endfor %}
+
+          <h3 class="sub">How to improve</h3>
+          {% for f in r.summary.faults %}
+            {% if f.remedy %}<div class="remedy">{{ f.remedy }}</div>{% endif %}
+          {% endfor %}
+        {% endif %}
+
+        {% if r.summary.strengths %}
+          <h3 class="sub">Holding up well</h3>
+          {% for f in r.summary.strengths %}
+            <div class="finding f-good">
+              <div class="ftext">{{ f.text }}</div>
+              <div class="fev">{{ f.evidence }}</div>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        {% if r.summary.not_assessed %}
+          <h3 class="sub">Couldn't be assessed</h3>
+          {% for n in r.summary.not_assessed %}
+            <div class="fev" style="padding:5px 0">{{ n }}</div>
+          {% endfor %}
+          <p class="muted" style="margin-bottom:0">
+            These aren't passes. They're checks this clip couldn't support — usually a camera
+            angle or a joint that wasn't tracked well enough to say anything about.
+          </p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% if r.findings %}
+      <h2>All observations
+        <span class="count">{{ r.findings|length }} observation{{ '' if r.findings|length == 1 else 's' }}</span>
+      </h2>
+      <div class="panel">
+        {% for f in r.findings %}
+          <div class="finding f-{{ f.severity }}">
+            <div class="ftext">{{ f.text }}</div>
+            <div class="fev">{{ f.evidence }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="muted">
+        These don't compare you to anyone — they're about which way things moved and in what
+        order, which is settled by mechanics rather than by a reference population. That's why
+        they work today while the scored ranges don't. Anything inside its own error bar is
+        left out rather than reported as a finding.
+      </p>
+    {% endif %}
+
+    {% if r.reconstruction %}
+      <h2>3D skeleton</h2>
+      <div class="panel">
+        <canvas id="viewer" width="820" height="440" style="width:100%;cursor:grab"></canvas>
+        <input id="scrub" type="range" min="0" value="0" style="width:100%;margin-top:12px">
+        <p class="muted" style="margin-bottom:0">
+          Drag to rotate.
+          {% if r.reconstruction.axes_from.lateral == 'front' %}
+            Left–right comes from the front clip, depth from the side clip, height from both,
+            aligned on the <strong>{{ r.reconstruction.sync_event }}</strong> event
+            ({{ r.reconstruction.sync_offset_s }}s apart).
+            This is composed from two views, not triangulated — the cameras aren't calibrated
+            to each other, so treat it as a shape to look at rather than a measurement.
+          {% else %}
+            <strong>Flat, because there's no front clip.</strong> One camera can't see the
+            left–right axis, so it's shown as zero rather than invented. Add a front-on clip
+            to fill it in.
+          {% endif %}
+        </p>
+      </div>
+      <script id="recon" type="application/json">{{ r.reconstruction | tojson }}</script>
+      <script id="edges" type="application/json">{{ r.skeleton_edges | tojson }}</script>
+      <script>
+      (function () {
+        const D = JSON.parse(document.getElementById('recon').textContent);
+        const E = JSON.parse(document.getElementById('edges').textContent);
+        const cv = document.getElementById('viewer'), cx = cv.getContext('2d');
+        const scrub = document.getElementById('scrub');
+        scrub.max = D.n_frames - 1;
+        let yaw = 0.6, pitch = -0.15, frame = 0, drag = null;
+
+        // Plain rotate-then-project. No library: the whole viewer is a dozen lines of maths
+        // and adding a CDN dependency for that would be worse than writing it.
+        function project(p) {
+          const cy = Math.cos(yaw), sy = Math.sin(yaw);
+          const cp = Math.cos(pitch), sp = Math.sin(pitch);
+          let x = p[0] * cy - p[2] * sy;
+          let z = p[0] * sy + p[2] * cy;
+          let y = p[1] * cp - z * sp;
+          z = p[1] * sp + z * cp;
+          const s = 300 / (2.6 + z);
+          return [cv.width / 2 + x * s * 2.2, cv.height / 2 - y * s * 2.2, z];
+        }
+
+        function draw() {
+          cx.clearRect(0, 0, cv.width, cv.height);
+          const pts = D.frames[frame], conf = D.confidence[frame];
+          if (!pts) return;
+
+          cx.strokeStyle = '#2a3138'; cx.lineWidth = 1;
+          for (let g = -1; g <= 1; g += 0.5) {
+            const a = project([g, -1.05, -1]), b = project([g, -1.05, 1]);
+            const c = project([-1, -1.05, g]), d = project([1, -1.05, g]);
+            cx.beginPath(); cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]); cx.stroke();
+            cx.beginPath(); cx.moveTo(c[0], c[1]); cx.lineTo(d[0], d[1]); cx.stroke();
+          }
+
+          for (const [i, j] of E) {
+            const weak = Math.min(conf[i], conf[j]) < 0.5;
+            const a = project(pts[i]), b = project(pts[j]);
+            cx.strokeStyle = weak ? '#4b5560' : '#4ade80';
+            cx.lineWidth = weak ? 1.5 : 3;
+            cx.beginPath(); cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]); cx.stroke();
+          }
+          for (let k = 0; k < pts.length; k++) {
+            const a = project(pts[k]);
+            cx.fillStyle = conf[k] < 0.5 ? '#6b7684' : '#f87171';
+            cx.beginPath(); cx.arc(a[0], a[1], conf[k] < 0.5 ? 2.5 : 4, 0, 7); cx.fill();
+          }
+          cx.fillStyle = '#98a2b0'; cx.font = '12px sans-serif';
+          cx.fillText('frame ' + frame, 12, cv.height - 12);
+        }
+
+        cv.addEventListener('mousedown', e => { drag = [e.clientX, e.clientY]; cv.style.cursor = 'grabbing'; });
+        window.addEventListener('mouseup', () => { drag = null; cv.style.cursor = 'grab'; });
+        window.addEventListener('mousemove', e => {
+          if (!drag) return;
+          yaw += (e.clientX - drag[0]) * 0.01;
+          pitch = Math.max(-1.2, Math.min(1.2, pitch + (e.clientY - drag[1]) * 0.01));
+          drag = [e.clientX, e.clientY]; draw();
+        });
+        scrub.addEventListener('input', () => { frame = +scrub.value; draw(); });
+        draw();
+      })();
+      </script>
+    {% endif %}
+
+    {% if r.events %}
+      <h2>Phases</h2>
+      <div class="panel">
+        {% for e in r.events %}
+          <div class="ev">
+            <span class="name {{ '' if e.detected else 'miss' }}">{{ e.name }}</span>
+            {% if e.detected %}
+              <span class="num">frame {{ e.frame }} &middot; {{ e.time }}s
+                <span class="ci">&plusmn;{{ e.uncertainty_ms }}ms &middot; conf {{ e.confidence }}</span>
+              </span>
+            {% else %}
+              <span class="miss">not found</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if r.metrics %}
+      <h2>Measurements
+        <span class="count">{{ r.metrics_measured }} of {{ r.metrics_total }}</span>
+      </h2>
+      {% if r.composite is none %}
+        <div class="banner">
+          <strong>No overall score — on purpose</strong>
+          {{ r.suppressed_reason or "Almost none of these measurements has a sourced reference range to compare against yet, so there is nothing honest to average into a grade." }}
+        </div>
+      {% endif %}
+      <div class="panel">
+        <table>
+          <thead><tr><th>What</th><th>Tier</th><th>Measured</th><th>Reference</th></tr></thead>
+          <tbody>
+          {% for m in r.metrics %}
+            <tr class="{{ '' if m.measured else 'unmeasured' }}">
+              <td>{{ m.summary or m.key }}</td>
+              <td><span class="pill t-{{ m.tier }}">{{ m.tier }}</span></td>
+              <td class="num">
+                {% if not m.measured %}
+                  <span class="ci">not measured</span>
+                {% elif m.tier == 'A' %}
+                  {{ m.value }} {{ m.units }}<br>
+                  <span class="ci">{{ m.ci_low }} to {{ m.ci_high }}</span>
+                {% else %}
+                  <span class="ci">banded &mdash; not precise enough for a number</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if not m.measured %}
+                  <span class="ci">{{ m.reason }}</span>
+                {% elif m.has_band %}
+                  <span class="num">{{ m.band_low }}&ndash;{{ m.band_high }}</span>
+                  <span class="ci">({{ m.source }})</span>
+                {% else %}
+                  <span class="ci">none sourced</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="muted">
+        Tier A can carry a number. Tier B is shown as a band because a single camera can't
+        measure it precisely enough to justify one. Anything that can't be measured reliably
+        at all — bat speed, elbow extension, shoulder rotation — isn't computed and never
+        appears here.
+      </p>
+
+      {% if r.unavailable_in_view %}
+        <div class="banner">
+          <strong>
+            {{ r.unavailable_in_view|length }} more measurements need a
+            {{ 'front-on' if r.detected_view == 'side_on' else 'side-on' }} camera
+          </strong>
+          A joint can only be measured when it moves across the camera rather than toward
+          it. From {{ 'side-on' if r.detected_view == 'side_on' else 'front-on' }} we can't
+          see: {{ r.unavailable_in_view[:5]|join('; ')|lower }}{% if r.unavailable_in_view|length > 5 %}, and others{% endif %}.
+          Filming the same shot from the other side would pick those up.
+        </div>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Secrets
+.env
+.env.local
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Model weights - large, and fetched at build time rather than committed.
+# RTMDet and RTMPose ONNX exports are published by OpenMMLab under Apache 2.0.
+analysis-service/models/*.onnx
+analysis-service/models/*.pth
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Test and validation artefacts
+report.json
+analysis-service/validation/clips/
+analysis-service/validation/labels/
+
+# OS
+.DS_Store
+Thumbs.db

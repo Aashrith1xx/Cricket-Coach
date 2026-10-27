@@ -1,0 +1,107 @@
+{
+  "form_type": "pull_shot",
+  "discipline": "batting",
+  "version": "0.1.0",
+  "notes": "pullshot_malaysia is the only located study reporting quantitative pull-shot kinematics, and most of its values CANNOT be transferred into this template without assumptions that would invalidate them. Three specific obstacles, documented per metric below: (1) it reports events as 'back lift of bat / bat-ball impact / follow-through', which do not map cleanly onto the peploe2019technique event set used by phase_detection; (2) it reports 'right knee' and 'left hip' rather than lead/rear, and the mapping depends on batter handedness which the study does not stratify; (3) it reports absolute metres with no participant stature, so no normalisation to frac_stature is possible. The study also states its own angular reliability as 3.1-10.7 deg on a small single-squad sample. This file is deliberately mostly unscored - that is the correct outcome, not an incomplete one.",
+  "phase_events": [
+    "STANCE",
+    "TRIGGER",
+    "BC",
+    "SS",
+    "SE",
+    "DS",
+    "IMP",
+    "FOLLOW_THROUGH"
+  ],
+  "metrics": {
+    "batting.stride_duration_ss_se": {
+      "tier": "A",
+      "event": "SS->SE",
+      "units": "s",
+      "convention": null,
+      "expected_low": 0.19,
+      "expected_high": 0.29,
+      "band_derivation": "mean_pm_1sd",
+      "source": "pullshot_malaysia",
+      "population": "elite_male",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Senior group 0.24 +/- 0.05 s; the study found no significant difference between senior, U19 and U16, so this is a descriptive range rather than a skill-discriminating one. Event mapping is UNCERTAIN: the study labels this 'stride duration at back lift', which is assumed here to correspond to SS->SE. Confidence is low for that reason as much as for sample size."
+    },
+    "batting.lead_knee_angle_imp": {
+      "tier": "A",
+      "event": "IMP",
+      "units": "deg",
+      "convention": "straight_180",
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "pullshot_malaysia found NO significant difference in left knee angle at any phase, and its significant finding was RIGHT knee extension at follow-through (senior 139.97 +/- 12.81 deg vs U16 120.77 +/- 5.81 deg, p<.03). For a right-handed batter the right leg is the REAR leg in a pull shot, so that result does not describe the lead knee and cannot be used here. A rear-knee-at-follow-through metric would need adding to metric_tiers with its own laterality handling."
+    },
+    "batting.stride_length_norm": {
+      "tier": "B",
+      "event": "SE",
+      "units": "frac_stature",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "pullshot_malaysia reports stride length at backlift of 0.77 +/- 0.13 m (senior), 0.85 +/- 0.11 (U19), 0.80 +/- 0.11 (U16) - no significant difference between groups - but publishes no participant stature, so conversion to frac_stature is impossible without inventing a value. The study also notes stride length REDUCES from backlift through to follow-through, so a single band would misrepresent the movement."
+    },
+    "batting.head_vertical_displacement_ds_imp": {
+      "tier": "A",
+      "event": "DS->IMP",
+      "units": "frac_stature",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "Same gap as cover_drive. The pull shot is played to a ball at around waist height, so head behaviour plausibly differs from a front-foot drive - do not transfer a cover-drive band here even once one exists."
+    },
+    "batting.interval_se_imp": {
+      "tier": "A",
+      "event": "SE->IMP",
+      "units": "s",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "The pull is a back-foot stroke; the front-foot-drive timing from frontfootdrive1999 does not apply."
+    },
+    "batting.base_length_pct_stature_imp": {
+      "tier": "A",
+      "event": "IMP",
+      "units": "pct_stature",
+      "convention": null,
+      "expected_low": null,
+      "expected_high": null,
+      "band_derivation": "todo",
+      "source": "",
+      "population": "unknown",
+      "confidence": "low",
+      "discriminates_skill": true,
+      "notes": "No published value for the pull shot."
+    }
+  },
+  "style_variants": {
+    "attacking": {},
+    "balanced": {},
+    "defensive": {}
+  }
+}

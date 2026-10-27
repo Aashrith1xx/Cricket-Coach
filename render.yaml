@@ -1,0 +1,53 @@
+# Render Blueprint. Deploy with: New > Blueprint, point at this repo.
+#
+# Sizing, measured rather than guessed:
+#   models + runtime          136 MB
+#   decoded frames (capped)   ~210 MB worst case at 720px / 900 frames
+#   Flask + request overhead  ~40 MB
+#   ------------------------------------
+#   peak                      ~390 MB   fits the 512 MB free tier, with little to spare
+#
+# One worker only. Each gunicorn worker loads its own copy of the ONNX models, so a second
+# worker doubles the resident set and OOMs the instance. Concurrency here is bounded by
+# memory, not CPU.
+
+services:
+  - type: web
+    name: cricket-form-demo
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+
+    buildCommand: |
+      pip install --no-cache-dir -r demo/requirements.txt
+      python scripts/fetch_models.py
+
+    # --timeout 300: a 240-frame clip takes roughly 30-60s on a shared vCPU, and gunicorn's
+    # 30s default would kill the request mid-analysis and look like a crash.
+    # --workers 1: see the memory note above.
+    # --threads 2: lets the health check answer while an analysis is running, which keeps
+    # Render from marking the service unhealthy during a long request.
+    startCommand: >
+      gunicorn demo.app:app
+      --chdir .
+      --bind 0.0.0.0:$PORT
+      --workers 1
+      --threads 2
+      --timeout 300
+      --graceful-timeout 30
+      --access-logfile -
+
+    healthCheckPath: /health
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: MAX_UPLOAD_MB
+        value: "60"
+      # Trims the OpenCV/ONNX thread pools. On a shared vCPU extra threads contend rather
+      # than help, and each pool costs memory.
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
